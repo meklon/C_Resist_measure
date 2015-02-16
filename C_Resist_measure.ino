@@ -5,7 +5,7 @@
 
 int pinCap = A0; //connected resistor
 unsigned long valDischargeTime = 0; //Counted discharge time in ms
-int valPinCapStatus = 0; //Logical level on capacitor's pin
+int valPinCapStatus = 0; //Level on capacitor's pin
 unsigned long valStartTime = 0; //Start of the absolute timer
 unsigned long valStopTime = 0; //End of the absolute timer
 unsigned long valOhm = 0; //Counted resistance of the sample
@@ -45,8 +45,22 @@ void loop() {
   valISRBool = 0; //reset the boolean
   
   while(valISRBool != 1){
-   valStopTime = micros();
-  }
+  /*If the capacitor discharges too fast, the interruption may not track it
+     Then the cycle would be endless. The other fail maybe with the discharge
+     with disconnected pin. To bypass it the additional slower ADC measurement
+     should be added with the reaction voltage under the reference, used by the
+     interruption.
+     NB! This workaround may cause the fast interruption method useless.    
+   */ 
+  valStopTime = micros();
+  valPinCapStatus = analogRead(pinCap);
+ 
+      //Additional break condition
+      if (valPinCapStatus < 645) //about 3V
+      {
+        break;
+      }
+}
   
   valStopTime = micros();
   valDischargeTime = valStopTime - valStartTime;
