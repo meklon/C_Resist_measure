@@ -1,9 +1,13 @@
 /*
+ Author: Gumenyuk Ivan
+ 
  Capacitive resistance measurement. The speed of discharging
- of the capacitor is controlled by the resistance of solution
+ of the capacitor is controlled by the resistance of solution.
+ 
  */
 
-int pinCap = A0; //connected resistor
+const int pinCap = A0; //connected resistor
+
 unsigned long valDischargeTime = 0; //Counted discharge time in ms
 int valPinCapStatus = 0; //Level on capacitor's pin
 unsigned long valStartTime = 0; //Start of the absolute timer
@@ -11,6 +15,9 @@ unsigned long valStopTime = 0; //End of the absolute timer
 unsigned long valOhm = 0; //Counted resistance of the sample
 unsigned long valTimePassed = 0; //Time after measuring start. Used as a timestamp
 volatile int valISRBool = 0; //check the interrupt
+
+//Delay between the measurements to minimize electrolitic process
+unsigned int MeasureDelay = 15000;
 
 /*Coeff of Ohm per ms
  This section should be replaced. The capacitor discharge is an exponential process,
@@ -36,6 +43,7 @@ void setup() {
 }
 
 void loop() {
+  delay(MeasureDelay);
   pinMode(pinCap, OUTPUT);
   digitalWrite(pinCap, HIGH);
   delay(300);
@@ -71,10 +79,6 @@ void loop() {
 
 void SerialOutput() {
   Serial.print(valTimePassed); Serial.print(","); Serial.println(valDischargeTime);
-  
-  //Serial.print("Time passed: ");Serial.print(valTimePassed);Serial.print(" s, ");
-  //Serial.print("Discharge time: ");Serial.print(valDischargeTime);Serial.print(" microsec, ");
-  //Serial.print("Resistance: ");Serial.print(valkOhm);Serial.println(" kOhm");
 }
   
 
