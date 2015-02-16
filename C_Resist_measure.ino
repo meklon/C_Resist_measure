@@ -40,8 +40,6 @@ void loop() {
   digitalWrite(pinCap, HIGH);
   delay(300);
   pinMode(pinCap, INPUT);
-  //delay(5000);
-  
   
   valStartTime = micros();
   valISRBool = 0; //reset the boolean
@@ -52,20 +50,19 @@ void loop() {
   
   valStopTime = micros();
   valDischargeTime = valStopTime - valStartTime;
-  
   valTimePassed = millis();
-  //valOhm = valDischargeTime * valCoeffOhmMs / 1000; //Counting the resistance of the sample
+  SerialOutput();
+  
+}
 
-  //Serial output
-
-  Serial.print(valTimePassed); Serial.print(","); Serial.println(valDischargeTime); //for debug
-
-
-  //Serial.println(valOhm);
+void SerialOutput() {
+  Serial.print(valTimePassed); Serial.print(","); Serial.println(valDischargeTime);
+  
   //Serial.print("Time passed: ");Serial.print(valTimePassed);Serial.print(" s, ");
   //Serial.print("Discharge time: ");Serial.print(valDischargeTime);Serial.print(" microsec, ");
   //Serial.print("Resistance: ");Serial.print(valkOhm);Serial.println(" kOhm");
 }
+  
 
 ISR(ANALOG_COMP_vect)
 {
