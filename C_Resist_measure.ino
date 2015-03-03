@@ -17,24 +17,26 @@ unsigned long valTimePassed = 0; //Time after measuring start. Used as a timesta
 volatile int valISRBool = 0; //check the interrupt
 
 //Delay between the measurements to minimize electrolitic process
-unsigned int MeasureDelay = 15000;
+//You definitely should use platinum or grafite electrodes
+//Delay for charging the capacitor. Depends on its capacity
+ unsigned int MeasureDelay = 1;
+ unsigned int ChargeDelay = 20;
 
 /*Coeff of Ohm per ms
  This section should be replaced. The capacitor discharge is an exponential process,
  so the table of approximation for different resistance values should be used or
-
  the direct computation, but it will use double variables and logarithm, which will slow down
-
  the process badly
 */
  
 void setup() {
   Serial.begin(9600);
+  delay(500);
   Serial.print("Time (milliseconds)"); Serial.print(","); Serial.println("Discharge_Time (microseconds)");
   pinMode(7, INPUT);
  ACSR =
    (0 << ACD) |    // Analog Comparator: Enabled
-   (0 << ACBG) |   // Analog Comparator Bandgap Select: AIN0 is applied to the positive input
+   (1 << ACBG) |   // Analog Comparator Bandgap Select: Replaced to internal reference 1.1 V. deprecated:(AIN0 is applied to the positive input)
    (0 << ACO) |    // Analog Comparator Output: Off
    (1 << ACI) |    // Analog Comparator Interrupt Flag: Clear Pending Interrupt
    (1 << ACIE) |   // Analog Comparator Interrupt: Enabled
@@ -46,7 +48,7 @@ void loop() {
   delay(MeasureDelay);
   pinMode(pinCap, OUTPUT);
   digitalWrite(pinCap, HIGH);
-  delay(300);
+  delay(ChargeDelay);
   pinMode(pinCap, INPUT);
   
   valStartTime = micros();
@@ -64,7 +66,7 @@ void loop() {
   valPinCapStatus = analogRead(pinCap);
  
       //Additional break condition
-      if (valPinCapStatus < 645) //about 3V
+      if (valPinCapStatus < 210) //about 1.1V
       {
         break;
       }
