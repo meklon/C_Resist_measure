@@ -18,7 +18,6 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress insideThermometer;
 
 const int pinCap = A0; //connected resistor
-
 unsigned long valDischargeTime = 0; //Counted discharge time in ms
 int valPinCapStatus = 0; //Level on capacitor's pin
 unsigned long valStartTime = 0; //Start of the absolute timer
@@ -30,8 +29,8 @@ volatile int valISRBool = 0; //check the interrupt
 //Delay between the measurements to minimize electrolitic process
 //You definitely should use platinum or grafite electrodes
 //Delay for charging the capacitor. Depends on its capacity
- unsigned int MeasureDelay = 5000;
- unsigned int ChargeDelay = 20;
+ unsigned int MeasureDelay = 15000;
+ unsigned int ChargeDelay = 10;
 
 /*Coeff of Ohm per ms
  This section should be replaced. The capacitor discharge is an exponential process,
@@ -43,7 +42,7 @@ volatile int valISRBool = 0; //check the interrupt
 void setup() {
   Serial.begin(9600);
   delay(500);
-  Serial.print("Time_(milliseconds)"); Serial.print(","); Serial.println("Discharge_Time_(microseconds)");
+  Serial.print("Timestamp"); Serial.print(","); Serial.print("Temperature"); Serial.print(","); Serial.println("Discharge_Time");
   pinMode(7, INPUT);
  ACSR =
    (0 << ACD) |    // Analog Comparator: Enabled
@@ -55,7 +54,7 @@ void setup() {
    (1 << ACIS1) | (0 << ACIS0);   // Analog Comparator Interrupt Mode: Comparator Interrupt on Falling Output Edge  
 
 //Dallas Temperature IC Control setup
-
+  sensors.begin();
 }
 
 void loop() {
@@ -84,17 +83,21 @@ void loop() {
       {
         break;
       }
-}
+  }
   
   valStopTime = micros();
   valDischargeTime = valStopTime - valStartTime;
   valTimePassed = millis();
   SerialOutput();
   
+  // call sensors.requestTemperatures() to issue a global temperature 
+  // request to all devices on the bus
+  sensors.requestTemperatures(); // Send the command to get temperatures
 }
 
 void SerialOutput() {
-  Serial.print(valTimePassed); Serial.print(","); Serial.println(valDischargeTime);
+  Serial.print(valTimePassed); Serial.print(","); Serial.print(sensors.getTempCByIndex(0)); Serial.print(","); Serial.print(valDischargeTime);
+  Serial.println();
 }
   
 
