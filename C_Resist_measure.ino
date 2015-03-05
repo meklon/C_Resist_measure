@@ -5,6 +5,17 @@
  of the capacitor is controlled by the resistance of solution.
  
  */
+//OneWire setup
+#include <OneWire.h>
+#include <DallasTemperature.h>
+// Data wire is plugged into port 10 on the Arduino
+#define ONE_WIRE_BUS 10
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+// arrays to hold device address
+DeviceAddress insideThermometer;
 
 const int pinCap = A0; //connected resistor
 
@@ -19,7 +30,7 @@ volatile int valISRBool = 0; //check the interrupt
 //Delay between the measurements to minimize electrolitic process
 //You definitely should use platinum or grafite electrodes
 //Delay for charging the capacitor. Depends on its capacity
- unsigned int MeasureDelay = 1;
+ unsigned int MeasureDelay = 5000;
  unsigned int ChargeDelay = 20;
 
 /*Coeff of Ohm per ms
@@ -32,7 +43,7 @@ volatile int valISRBool = 0; //check the interrupt
 void setup() {
   Serial.begin(9600);
   delay(500);
-  Serial.print("Time (milliseconds)"); Serial.print(","); Serial.println("Discharge_Time (microseconds)");
+  Serial.print("Time_(milliseconds)"); Serial.print(","); Serial.println("Discharge_Time_(microseconds)");
   pinMode(7, INPUT);
  ACSR =
    (0 << ACD) |    // Analog Comparator: Enabled
@@ -42,6 +53,9 @@ void setup() {
    (1 << ACIE) |   // Analog Comparator Interrupt: Enabled
    (0 << ACIC) |   // Analog Comparator Input Capture: Disabled
    (1 << ACIS1) | (0 << ACIS0);   // Analog Comparator Interrupt Mode: Comparator Interrupt on Falling Output Edge  
+
+//Dallas Temperature IC Control setup
+
 }
 
 void loop() {
