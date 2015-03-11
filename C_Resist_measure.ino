@@ -5,9 +5,14 @@
  of the capacitor is controlled by the resistance of solution.
  
  */
+#include <RunningMedian.h>
+//size of running median buffer
+RunningMedian SamplesDischarge = RunningMedian(6);
+
 //OneWire setup
 #include <OneWire.h>
 #include <DallasTemperature.h>
+
 // Data wire is plugged into port 10 on the Arduino
 #define ONE_WIRE_BUS 10
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
@@ -19,31 +24,34 @@ DeviceAddress insideThermometer;
 
 const int pinCap = A0; //connected resistor
 unsigned long valDischargeTime = 0; //Counted discharge time in ms
+unsigned long DischargeTimeMedian = 0;
+unsigned long DischargeTimeAverage = 0;
 int valPinCapStatus = 0; //Level on capacitor's pin
 unsigned long valStartTime = 0; //Start of the absolute timer
 unsigned long valStopTime = 0; //End of the absolute timer
-unsigned long valOhm = 0; //Counted resistance of the sample
+unsigned long valOhm = 0; //Counted resistance of the sample (not used yet)
 unsigned long valTimePassed = 0; //Time after measuring start. Used as a timestamp
 volatile int valISRBool = 0; //check the interrupt
 
 //Delay between the measurements to minimize electrolitic process
 //You definitely should use platinum or grafite electrodes
 //Delay for charging the capacitor. Depends on its capacity
- unsigned int MeasureDelay = 15000;
- unsigned int ChargeDelay = 10;
+ unsigned int MeasureDelay = 15000; //in milliseconds
+ unsigned int ChargeDelay = 2400; //in microseconds
 
-/*Coeff of Ohm per ms
- This section should be replaced. The capacitor discharge is an exponential process,
- so the table of approximation for different resistance values should be used or
- the direct computation, but it will use double variables and logarithm, which will slow down
- the process badly
-*/
  
 void setup() {
   Serial.begin(9600);
   delay(500);
-  Serial.print("Timestamp"); Serial.print(","); Serial.print("Temperature"); Serial.print(","); Serial.println("Discharge_Time");
+  //Serial.print("Timestamp"); Serial.print(",");
+  //Serial.print("Temperature"); Serial.print(",");
+  Serial.print("Discharge_Time"); Serial.print(",");
+  Serial.print("Discharge_Median"); Serial.print(",");
+  Serial.print("Discharge_Average");
+  Serial.println();
+  
   pinMode(7, INPUT);
+ 
  ACSR =
    (0 << ACD) |    // Analog Comparator: Enabled
    (1 << ACBG) |   // Analog Comparator Bandgap Select: Replaced to internal reference 1.1 V. deprecated:(AIN0 is applied to the positive input)
@@ -61,7 +69,7 @@ void loop() {
   delay(MeasureDelay);
   pinMode(pinCap, OUTPUT);
   digitalWrite(pinCap, HIGH);
-  delay(ChargeDelay);
+  delayMicroseconds(ChargeDelay);
   pinMode(pinCap, INPUT);
   
   valStartTime = micros();
@@ -88,15 +96,24 @@ void loop() {
   valStopTime = micros();
   valDischargeTime = valStopTime - valStartTime;
   valTimePassed = millis();
-  SerialOutput();
-  
+    
   // call sensors.requestTemperatures() to issue a global temperature 
   // request to all devices on the bus
   sensors.requestTemperatures(); // Send the command to get temperatures
+  
+  //Filling the RunningMedian buffer
+  SamplesDischarge.add(valDischargeTime);
+  DischargeTimeMedian = SamplesDischarge.getMedian();
+  DischargeTimeAverage = SamplesDischarge.getAverage();
+  SerialOutput();
 }
 
 void SerialOutput() {
-  Serial.print(valTimePassed); Serial.print(","); Serial.print(sensors.getTempCByIndex(0)); Serial.print(","); Serial.print(valDischargeTime);
+  //Serial.print(valTimePassed); Serial.print(",");
+  //Serial.print(sensors.getTempCByIndex(0)); Serial.print(",");
+  Serial.print(valDischargeTime); Serial.print(",");
+  Serial.print(DischargeTimeMedian); Serial.print(",");
+  Serial.print(DischargeTimeAverage);
   Serial.println();
 }
   
